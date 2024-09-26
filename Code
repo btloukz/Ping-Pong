@@ -1,0 +1,134 @@
+import pygame
+from pygame import KEYDOWN
+from random import randint, randrange
+
+class Retangulo:
+    def __init__(self, px, py, cor="black", largura = 20, altura = 80, velocidade=1):
+        self.px = px
+        self.py = py
+        self.cor = cor
+        self.largura = largura
+        self.altura = altura
+        self.velocidade = velocidade
+
+    def detecta(self, tecla):
+        if tecla[pygame.K_DOWN] == True:
+            print('DESCENDO!!')
+            self.movimento(10)
+
+        if tecla[pygame.K_UP] == True:
+            print('SUBINDO!!')
+            self.movimento(-10)
+
+    def newDetecta(self, tecla):
+        if tecla[pygame.K_s] == True:
+            print('DESCENDO COM S!!')
+            self.movimento(10)
+
+        if tecla[pygame.K_w] == True:
+            print('SUBINDO COM W!!')
+            self.movimento(-10)
+
+    def movimento(self, movVertical):
+        if movVertical < 0 and self.py - self.velocidade >= 0:
+            self.py -= self.velocidade
+        if movVertical > 0 and self.py + self.altura + self.velocidade <= 600:
+            self.py += self.velocidade
+
+    def desenhar(self, tela):
+        pygame.draw.rect(tela, self.cor, [self.px, self.py, self.largura, self.altura], 0)
+
+class Bolinha:
+    def __init__(self, px, py, cor="black", tamanho=50, velocidade=0.5):
+        self.px = px
+        self.py = py
+        self.cor = cor
+        self.tamanho = tamanho
+        self.velocidade = velocidade
+        self.mov_x = velocidade
+        self.mov_y = velocidade
+
+
+    def mover(self):
+        self.px += self.mov_x * self.velocidade
+        self.py += self.mov_y * self.velocidade
+        if self.py - self.tamanho <= 0 or self.py + self.tamanho >= 600:
+            self.mov_y *= -1
+
+        if self.px - self.tamanho <= 0 or self.px + self.tamanho >= 600:
+            self.mov_x = 1 / randint(3,8) if randint(0,1) > 0 else -1 / randint(3,8)
+
+
+    def desenhar(self, tela):
+        pygame.draw.circle(tela, self.cor, [self.px, self.py], self.tamanho)
+
+    def colide(self, player):
+        if self.px + self.tamanho > player.px and self.px - self.tamanho < player.px + player.largura and self.py + self.tamanho > player.py and  self.py - self.tamanho < player.py + player.altura:
+            return True
+
+pygame.init()
+tela = pygame.display.set_mode([600, 600])
+player1 = Retangulo(10,300)
+player2 = Retangulo(570,300)
+bola = Bolinha(300,300,'blue',10)
+pontos1 = 0
+pontos2 = 0
+fonte = pygame.font.SysFont('comic sans', 40, True, False)
+fundo = 'gray'
+detected = False
+run = True
+while run:
+    #print("running")
+    tecla = pygame.key.get_pressed()
+    player1.newDetecta(tecla)
+    player2.detecta(tecla)
+
+    placar1 = f'{pontos1}'
+    placar2 = f'{pontos2}'
+    texto1 = fonte.render(placar1, True, 'black')
+    texto2 = fonte.render(placar2, True, 'black')
+    for evento in pygame.event.get():
+        #print(evento)
+
+        if evento.type == pygame.QUIT:
+            run = False
+            #print(evento)
+        if evento.type == KEYDOWN:
+            print(tecla)
+            if evento.key == pygame.K_ESCAPE:
+                run = False
+
+    tela.fill(fundo)
+
+    # comandos para desenhar figuras - circle: circulo
+    player1.desenhar(tela)
+    player2.desenhar(tela)
+    bola.desenhar(tela)
+    bola.mover()
+
+    if bola.colide(player1):
+        bola.mov_x *= -1
+        bola.px = player1.px + player1.largura + bola.tamanho
+
+    if bola.colide(player2):
+        bola.mov_x *= -1
+        bola.px = player2.px - bola.tamanho
+
+    if bola.px - bola.tamanho <= 0:
+        pontos2 += 1
+        bola.px = 300
+        bola.py = 300
+
+    elif bola.px + bola.tamanho >= 600:
+        pontos1 += 1
+        bola.px = 300
+        bola.py = 300
+
+    tela.blit(texto1, (260, 20))
+    tela.blit(texto2, (320, 20))
+
+
+    # comando para atualizar a tela
+    pygame.display.flip()
+
+pygame.quit()
